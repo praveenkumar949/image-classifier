@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Image Classifier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Smart Image Classifier</h1>
+        <p class="subtitle">Upload an image and let AI guess what it is!</p>
+
+        <div class="upload-box">
+            <input type="file" id="imageInput" accept="image/*">
+            <button onclick="predictImage()">🔍 Predict</button>
+        </div>
+
+        <div id="preview" class="preview-box"></div>
+        <div id="result" class="result-box"></div>
+    </div>
+
+    <footer>
+        Made with ❤️ using Flask & TensorFlow
+    </footer>
+
+    <script>
+        function predictImage() {
+            const input = document.getElementById('imageInput');
+            const file = input.files[0];
+
+            if (!file) {
+                alert("Please upload an image first.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('preview').innerHTML = `
+                    <img src="${e.target.result}" alt="Uploaded Image">
+                `;
+            };
+            reader.readAsDataURL(file);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('result').innerHTML = `<p class="error">❌ ${data.error}</p>`;
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <h2>✅ Prediction</h2>
+                        <p><strong>Class:</strong> ${data.class}</p>
+                        <p><strong>Confidence:</strong> ${data.confidence}%</p>
+                    `;
+                }
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML = `<p class="error">❌ Prediction failed: ${err.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
